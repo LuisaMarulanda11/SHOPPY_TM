@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+@theme {
+  --color-shoppy-bg: #080d1a;
+  --color-shoppy-panel: rgba(17, 24, 39, 0.92);
+  --color-shoppy-cyan: #00d9ff;
+  --color-shoppy-cyan-soft: #58d6ff;
+  --color-shoppy-violet: #7c3aed;
+  --color-shoppy-pink: #ff4fd8;
+  --color-shoppy-muted: #94a3b8;
+  --color-shoppy-card: #0f172a;
+  --color-shoppy-border: #334155;
+  --font-sans: Arial, Helvetica, sans-serif;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    color: white;
+    background:
+      radial-gradient(circle at top left, rgba(0, 217, 255, 0.15), transparent 35%),
+      radial-gradient(circle at bottom right, rgba(255, 79, 216, 0.15), transparent 35%),
+      var(--color-shoppy-bg);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+}
+
+@layer utilities {
+  .text-gradient-shoppy {
+    background: linear-gradient(90deg, #00d9ff, #7c3aed, #ff4fd8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .btn-gradient {
+    background: linear-gradient(90deg, #00bcd4, #7c3aed);
+  }
+
+  .panel-shoppy {
+    background: var(--color-shoppy-panel);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.45);
+  }
+}
