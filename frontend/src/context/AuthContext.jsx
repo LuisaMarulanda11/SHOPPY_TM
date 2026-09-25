@@ -18,6 +18,7 @@ export function AuthProvider({ children }) {
     () => ({
       usuario,
       loading,
+      esAdmin: usuario?.rol === "admin",
       setUsuario,
       async logout() {
         try {

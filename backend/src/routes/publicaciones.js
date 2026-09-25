@@ -1,15 +1,45 @@
 const express = require("express");
 const pool = require("../db");
-const { requireAuth } = require("../middleware/auth");
+const { requireAuth, cargarUsuario } = require("../middleware/auth");
 const { upload } = require("../middleware/upload");
 const { guardarFotos, eliminarFoto } = require("../utils/storage");
+const { esDueno, puedeAdministrar } = require("../utils/permisos");
 const { ok, fail, publicUrl, mapProduct } = require("../utils/response");
 
 const router = express.Router();
 
-router.get("/", requireAuth, async (req, res) => {
+async function buscarPublicacion(id) {
+  const [rows] = await pool.query(
+    "SELECT id, usuario_id, foto FROM publicaciones WHERE id = ? LIMIT 1",
+    [id]
+  );
+  return rows[0] || null;
+}
+
+/** Envía 404/403 y devuelve false si el usuario no es dueño ni admin. */
+function autorizar(req, res, publicacion) {
+  if (!publicacion) {
+    fail(res, "Publicación no encontrada.", 404);
+    return false;
+  }
+  if (!puedeAdministrar(req.usuario, publicacion)) {
+    fail(res, "No tienes permiso para modificar esta publicación.", 403);
+    return false;
+  }
+  return true;
+}
+
+function registrarAccionAdmin(req, publicacion, accion) {
+  if (!esDueno(req.usuario, publicacion)) {
+    console.info(
+      `[admin] usuario ${req.usuario.id} ${accion} la publicación ${publicacion.id} del usuario ${publicacion.usuario_id}`
+    );
+  }
+}
+
+router.get("/", requireAuth, cargarUsuario, async (req, res) => {
   try {
-    const usuarioId = req.session.usuarioId;
+    const usuarioId = req.usuario.id;
     const id = Number(req.query.id || 0);
     const [categorias] = await pool.query(
       "SELECT id, nombre FROM categorias ORDER BY nombre ASC"
@@ -17,12 +47,14 @@ router.get("/", requireAuth, async (req, res) => {
 
     if (id > 0) {
       const [rows] = await pool.query(
-        `SELECT id, titulo, descripcion, precio, foto, condicion, ubicacion,
-                categoria_id, estado, fecha_publicacion
-         FROM publicaciones WHERE id = ? AND usuario_id = ? LIMIT 1`,
-        [id, usuarioId]
+        `SELECT p.id, p.usuario_id, p.titulo, p.descripcion, p.precio, p.foto, p.condicion,
+                p.ubicacion, p.categoria_id, p.estado, p.fecha_publicacion, u.nombre AS vendedor
+         FROM publicaciones p
+         INNER JOIN usuarios u ON p.usuario_id = u.id
+         WHERE p.id = ? LIMIT 1`,
+        [id]
       );
-      if (!rows.length) return fail(res, "Publicación no encontrada.", 404);
+      if (!autorizar(req, res, rows[0])) return;
 
       let [fotos] = await pool.query(
         "SELECT id, foto FROM fotos_publicacion WHERE publicacion_id = ? ORDER BY id ASC",
@@ -37,6 +69,7 @@ router.get("/", requireAuth, async (req, res) => {
         publicacion: mapProduct(rows[0]),
         fotos,
         categorias,
+        es_propia: esDueno(req.usuario, rows[0]),
       });
     }
 
@@ -105,65 +138,64 @@ router.post("/", requireAuth, upload.array("fotos", 10), async (req, res) => {
   }
 });
 
-router.post("/update", requireAuth, upload.array("fotos", 10), async (req, res) => {
-  try {
-    const usuarioId = req.session.usuarioId;
-    const id = Number(req.body.id || req.query.id || 0);
-    if (id <= 0) return fail(res, "ID inválido.");
+router.post(
+  "/update",
+  requireAuth,
+  cargarUsuario,
+  upload.array("fotos", 10),
+  async (req, res) => {
+    try {
+      const id = Number(req.body.id || req.query.id || 0);
+      if (id <= 0) return fail(res, "ID inválido.");
 
-    const [rows] = await pool.query(
-      "SELECT id, foto FROM publicaciones WHERE id = ? AND usuario_id = ? LIMIT 1",
-      [id, usuarioId]
-    );
-    if (!rows.length) return fail(res, "Publicación no encontrada.", 404);
+      const publicacion = await buscarPublicacion(id);
+      if (!autorizar(req, res, publicacion)) return;
 
-    const titulo = String(req.body.titulo || "").trim();
-    const descripcion = String(req.body.descripcion || "").trim();
-    const precio = req.body.precio;
-    const condicion = String(req.body.condicion || "").trim();
-    const ubicacion = String(req.body.ubicacion || "").trim();
-    const categoria_id = Number(req.body.categoria_id || 0);
+      const titulo = String(req.body.titulo || "").trim();
+      const descripcion = String(req.body.descripcion || "").trim();
+      const precio = req.body.precio;
+      const condicion = String(req.body.condicion || "").trim();
+      const ubicacion = String(req.body.ubicacion || "").trim();
+      const categoria_id = Number(req.body.categoria_id || 0);
 
-    if (!titulo || !descripcion || !precio || !condicion || !ubicacion || !categoria_id) {
-      return fail(res, "Completa todos los campos.");
-    }
+      if (!titulo || !descripcion || !precio || !condicion || !ubicacion || !categoria_id) {
+        return fail(res, "Completa todos los campos.");
+      }
 
-    const nuevas = await guardarFotos(req.files || []);
-    let fotoPrincipal = rows[0].foto;
-    if (!fotoPrincipal && nuevas.length) fotoPrincipal = nuevas[0];
+      const nuevas = await guardarFotos(req.files || []);
+      let fotoPrincipal = publicacion.foto;
+      if (!fotoPrincipal && nuevas.length) fotoPrincipal = nuevas[0];
 
-    await pool.query(
-      `UPDATE publicaciones
-       SET titulo=?, descripcion=?, precio=?, foto=?, condicion=?, ubicacion=?, categoria_id=?
-       WHERE id=? AND usuario_id=?`,
-      [titulo, descripcion, Number(precio), fotoPrincipal, condicion, ubicacion, categoria_id, id, usuarioId]
-    );
-
-    for (const ruta of nuevas) {
       await pool.query(
-        "INSERT INTO fotos_publicacion (publicacion_id, foto, fecha) VALUES (?, ?, NOW())",
-        [id, ruta]
+        `UPDATE publicaciones
+         SET titulo=?, descripcion=?, precio=?, foto=?, condicion=?, ubicacion=?, categoria_id=?
+         WHERE id=?`,
+        [titulo, descripcion, Number(precio), fotoPrincipal, condicion, ubicacion, categoria_id, id]
       );
+
+      for (const ruta of nuevas) {
+        await pool.query(
+          "INSERT INTO fotos_publicacion (publicacion_id, foto, fecha) VALUES (?, ?, NOW())",
+          [id, ruta]
+        );
+      }
+
+      registrarAccionAdmin(req, publicacion, "editó");
+      return ok(res, { mensaje: "Publicación actualizada correctamente.", id });
+    } catch (e) {
+      console.error(e);
+      return fail(res, "No fue posible actualizar la publicación.", 500);
     }
-
-    return ok(res, { mensaje: "Publicación actualizada correctamente.", id });
-  } catch (e) {
-    console.error(e);
-    return fail(res, "No fue posible actualizar la publicación.", 500);
   }
-});
+);
 
-router.post("/delete", requireAuth, async (req, res) => {
+router.post("/delete", requireAuth, cargarUsuario, async (req, res) => {
   try {
-    const usuarioId = req.session.usuarioId;
     const id = Number(req.body.id || req.query.id || 0);
     if (id <= 0) return fail(res, "ID inválido.");
 
-    const [rows] = await pool.query(
-      "SELECT id, foto FROM publicaciones WHERE id = ? AND usuario_id = ? LIMIT 1",
-      [id, usuarioId]
-    );
-    if (!rows.length) return fail(res, "Publicación no encontrada.", 404);
+    const publicacion = await buscarPublicacion(id);
+    if (!autorizar(req, res, publicacion)) return;
 
     const [fotos] = await pool.query(
       "SELECT foto FROM fotos_publicacion WHERE publicacion_id = ?",
@@ -173,11 +205,12 @@ router.post("/delete", requireAuth, async (req, res) => {
     await pool.query("DELETE FROM favoritos WHERE publicacion_id = ?", [id]);
     await pool.query("DELETE FROM mensajes WHERE publicacion_id = ?", [id]);
     await pool.query("DELETE FROM fotos_publicacion WHERE publicacion_id = ?", [id]);
-    await pool.query("DELETE FROM publicaciones WHERE id = ? AND usuario_id = ?", [id, usuarioId]);
+    await pool.query("DELETE FROM publicaciones WHERE id = ?", [id]);
 
-    const rutasFotos = new Set([...fotos.map((f) => f.foto), rows[0].foto].filter(Boolean));
+    const rutasFotos = new Set([...fotos.map((f) => f.foto), publicacion.foto].filter(Boolean));
     for (const ruta of rutasFotos) await eliminarFoto(ruta);
 
+    registrarAccionAdmin(req, publicacion, "eliminó");
     return ok(res, { mensaje: "Publicación eliminada." });
   } catch (e) {
     console.error(e);
@@ -185,6 +218,7 @@ router.post("/delete", requireAuth, async (req, res) => {
   }
 });
 
+// Solo el dueño puede marcar su publicación como vendida; el admin no tiene este permiso.
 router.post("/vendido", requireAuth, async (req, res) => {
   try {
     const usuarioId = req.session.usuarioId;
@@ -202,22 +236,24 @@ router.post("/vendido", requireAuth, async (req, res) => {
   }
 });
 
-router.post("/eliminar-foto", requireAuth, async (req, res) => {
+router.post("/eliminar-foto", requireAuth, cargarUsuario, async (req, res) => {
   try {
-    const usuarioId = req.session.usuarioId;
     const fotoId = Number(req.body.id || req.query.id || 0);
     if (fotoId <= 0) return fail(res, "ID de foto inválido.");
 
     const [rows] = await pool.query(
-      `SELECT fp.id, fp.foto, fp.publicacion_id
+      `SELECT fp.id, fp.foto, fp.publicacion_id, p.usuario_id
        FROM fotos_publicacion fp
        INNER JOIN publicaciones p ON fp.publicacion_id = p.id
-       WHERE fp.id = ? AND p.usuario_id = ? LIMIT 1`,
-      [fotoId, usuarioId]
+       WHERE fp.id = ? LIMIT 1`,
+      [fotoId]
     );
     if (!rows.length) return fail(res, "Foto no encontrada.", 404);
 
-    const { publicacion_id, foto } = rows[0];
+    const { publicacion_id, foto, usuario_id } = rows[0];
+    const publicacion = { id: publicacion_id, usuario_id };
+    if (!autorizar(req, res, publicacion)) return;
+
     const [[{ total }]] = await pool.query(
       "SELECT COUNT(*) AS total FROM fotos_publicacion WHERE publicacion_id = ?",
       [publicacion_id]
@@ -239,12 +275,13 @@ router.post("/eliminar-foto", requireAuth, async (req, res) => {
       [publicacion_id]
     );
     if (next.length) {
-      await pool.query(
-        "UPDATE publicaciones SET foto = ? WHERE id = ? AND usuario_id = ?",
-        [next[0].foto, publicacion_id, usuarioId]
-      );
+      await pool.query("UPDATE publicaciones SET foto = ? WHERE id = ?", [
+        next[0].foto,
+        publicacion_id,
+      ]);
     }
 
+    registrarAccionAdmin(req, publicacion, "eliminó una foto de");
     return ok(res, { mensaje: "Foto eliminada.", publicacion_id });
   } catch (e) {
     console.error(e);

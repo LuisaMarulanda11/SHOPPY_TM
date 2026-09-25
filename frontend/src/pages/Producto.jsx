@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiGet, apiPost, assetUrl, formatMoney } from "../api/client";
 import ShareProduct from "../components/ShareProduct";
 import { Alert, AppHeader, PageShell } from "../components/ui";
 
 export default function Producto() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [adminLoading, setAdminLoading] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [indice, setIndice] = useState(0);
@@ -44,6 +46,22 @@ export default function Producto() {
       setError(err.message || "No se pudo actualizar el favorito");
     } finally {
       setFavLoading(false);
+    }
+  }
+
+  async function eliminarComoAdmin() {
+    const confirmado = window.confirm(
+      `🛡️ ACCIÓN ADMINISTRATIVA\n\nVas a eliminar la publicación "${producto.titulo}" de ${producto.vendedor}.\nTambién se eliminarán sus fotos, favoritos y mensajes asociados.\n\nEsta acción no se puede deshacer. ¿Continuar?`
+    );
+    if (!confirmado) return;
+    setAdminLoading(true);
+    setError("");
+    try {
+      await apiPost("/publicaciones/delete", { id: Number(id) });
+      navigate("/admin", { replace: true });
+    } catch (err) {
+      setError(err.message || "No se pudo eliminar la publicación");
+      setAdminLoading(false);
     }
   }
 
@@ -228,6 +246,34 @@ export default function Producto() {
                   )}
                   <ShareProduct productId={producto.id} titulo={producto.titulo} />
                 </div>
+
+                {!esMio && data?.puede_administrar && (
+                  <div className="mt-5 rounded-2xl border border-amber-400/40 bg-amber-400/10 p-4">
+                    <div className="text-sm font-semibold text-amber-300">
+                      🛡️ Acciones de administrador
+                    </div>
+                    <p className="mt-1 text-xs text-amber-100/80">
+                      Esta publicación pertenece a {producto.vendedor}. Lo que hagas aquí es una
+                      acción administrativa.
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Link
+                        to={`/editar-publicacion/${producto.id}`}
+                        className="rounded-xl border border-amber-400/50 px-4 py-2 text-sm font-semibold text-amber-200"
+                      >
+                        ✏️ Editar como administrador
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={eliminarComoAdmin}
+                        disabled={adminLoading}
+                        className="rounded-xl bg-red-600/90 px-4 py-2 text-sm font-bold disabled:opacity-60"
+                      >
+                        {adminLoading ? "Eliminando..." : "🗑️ Eliminar como administrador"}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {data.fecha_publicacion && (
                   <p className="mt-4 text-sm text-shoppy-muted">

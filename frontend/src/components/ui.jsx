@@ -6,7 +6,7 @@ export function AppHeader({
   mensajesNuevos = 0,
   nombre,
 }) {
-  const { usuario, logout } = useAuth();
+  const { usuario, logout, esAdmin } = useAuth();
   const displayName = nombre || usuario?.nombre || "";
 
   return (
@@ -60,6 +60,16 @@ export function AppHeader({
               >
                 👤 Perfil
               </NavLink>
+              {esAdmin && (
+                <NavLink
+                  className={({ isActive }) =>
+                    `nav-chip border-amber-400/40 text-amber-300${isActive ? " is-active" : ""}`
+                  }
+                  to="/admin"
+                >
+                  🛡️ Admin
+                </NavLink>
+              )}
               <button
                 type="button"
                 className="nav-chip border border-white/10 bg-transparent"

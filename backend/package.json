@@ -8,7 +8,8 @@
     "start": "node src/index.js",
     "migrate:clever": "node scripts/migrate-clever.js",
     "import:dump": "node scripts/import-dump.js",
-    "migrar:fotos": "node scripts/migrar-fotos-blob.js"
+    "migrar:fotos": "node scripts/migrar-fotos-blob.js",
+    "rol:admin": "node scripts/agregar-rol-admin.js"
   },
   "keywords": [],
   "author": "",

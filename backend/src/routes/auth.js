@@ -1,6 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const pool = require("../db");
+const { obtenerUsuario } = require("../middleware/auth");
 const { ok, fail } = require("../utils/response");
 
 const router = express.Router();
@@ -33,8 +34,9 @@ router.post("/login", async (req, res) => {
     req.session.nombre = u.nombre;
     req.session.email = u.email;
 
+    const { rol } = (await obtenerUsuario(u.id)) || { rol: "usuario" };
     return ok(res, {
-      usuario: { id: u.id, nombre: u.nombre, email: u.email },
+      usuario: { id: u.id, nombre: u.nombre, email: u.email, rol },
     });
   } catch (e) {
     console.error(e);
@@ -106,7 +108,8 @@ router.get("/me", async (req, res) => {
       req.session = null;
       return fail(res, "Sesión inválida", 401);
     }
-    return ok(res, { usuario: rows[0] });
+    const { rol } = (await obtenerUsuario(rows[0].id)) || { rol: "usuario" };
+    return ok(res, { usuario: { ...rows[0], rol } });
   } catch (e) {
     return fail(res, "Error", 500);
   }

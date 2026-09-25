@@ -22,6 +22,7 @@ export default function EditarPublicacion() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [publicacion, setPublicacion] = useState(null);
+  const [esPropia, setEsPropia] = useState(true);
   const [fotos, setFotos] = useState([]);
   const [categorias, setCategorias] = useState([]);
   const [error, setError] = useState("");
@@ -35,6 +36,7 @@ export default function EditarPublicacion() {
     try {
       const data = await apiGet(`/publicaciones?id=${id}`);
       setPublicacion(data.publicacion);
+      setEsPropia(data.es_propia !== false);
       setFotos(data.fotos || []);
       setCategorias(data.categorias || []);
     } catch (err) {
@@ -53,7 +55,10 @@ export default function EditarPublicacion() {
       setError("Esta foto no se puede eliminar por separado.");
       return;
     }
-    if (!window.confirm("¿Eliminar esta foto?")) return;
+    const aviso = esPropia
+      ? "¿Eliminar esta foto?"
+      : `🛡️ ACCIÓN ADMINISTRATIVA\n\n¿Eliminar esta foto de la publicación de ${publicacion?.vendedor || "otro usuario"}?`;
+    if (!window.confirm(aviso)) return;
     try {
       const data = await apiPost("/publicaciones/eliminar-foto", { id: fotoId });
       setMensaje(data.mensaje || "Foto eliminada.");
@@ -82,7 +87,7 @@ export default function EditarPublicacion() {
       }
       const data = await apiForm("/publicaciones/update", fd);
       setMensaje(data.mensaje || "Publicación actualizada.");
-      setTimeout(() => navigate("/mis-publicaciones"), 700);
+      setTimeout(() => navigate(esPropia ? "/mis-publicaciones" : `/producto/${id}`), 700);
     } catch (err) {
       setError(err.message || "No fue posible actualizar");
     } finally {
@@ -107,6 +112,13 @@ export default function EditarPublicacion() {
             Actualiza la información o las fotos de tu producto.
           </p>
 
+          {!loading && publicacion && !esPropia && (
+            <div className="mt-4 rounded-xl border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">
+              🛡️ <strong>Modo administrador:</strong> estás editando la publicación de{" "}
+              <strong>{publicacion.vendedor}</strong>. Los cambios se guardarán como acción
+              administrativa.
+            </div>
+          )}
           {mensaje && <Alert type="success">{mensaje}</Alert>}
           {error && <Alert>{error}</Alert>}
           {loading && <p className="mt-4 text-shoppy-muted">Cargando...</p>}

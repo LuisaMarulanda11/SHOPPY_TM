@@ -14,6 +14,7 @@ const publicacionesRoutes = require("./routes/publicaciones");
 const favoritosRoutes = require("./routes/favoritos");
 const mensajesRoutes = require("./routes/mensajes");
 const perfilRoutes = require("./routes/perfil");
+const adminRoutes = require("./routes/admin");
 
 const app = express();
 
@@ -87,6 +88,7 @@ app.use("/api/publicaciones", publicacionesRoutes);
 app.use("/api/favoritos", favoritosRoutes);
 app.use("/api/mensajes", mensajesRoutes);
 app.use("/api/perfil", perfilRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error(err);

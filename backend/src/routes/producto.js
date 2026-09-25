@@ -1,11 +1,12 @@
 const express = require("express");
 const pool = require("../db");
-const { requireAuth } = require("../middleware/auth");
+const { requireAuth, cargarUsuario } = require("../middleware/auth");
+const { esAdmin, puedeAdministrar } = require("../utils/permisos");
 const { ok, fail, publicUrl, mapProduct } = require("../utils/response");
 
 const router = express.Router();
 
-router.get("/", requireAuth, async (req, res) => {
+router.get("/", requireAuth, cargarUsuario, async (req, res) => {
   try {
     const id = Number(req.query.id || 0);
     const usuarioId = req.session.usuarioId;
@@ -61,6 +62,8 @@ router.get("/", requireAuth, async (req, res) => {
       fecha_publicacion: fecha,
       relacionados: relacionados.map(mapProduct),
       usuario_id: usuarioId,
+      es_admin: esAdmin(req.usuario),
+      puede_administrar: puedeAdministrar(req.usuario, { usuario_id: producto.vendedor_id }),
     });
   } catch (e) {
     console.error(e);
