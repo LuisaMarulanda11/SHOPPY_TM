@@ -1,5 +1,9 @@
 {
   "version": 2,
+  "framework": null,
+  "installCommand": "npm install",
+  "buildCommand": "mkdir -p public",
+  "outputDirectory": "public",
   "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
   "functions": {
     "api/index.js": {
