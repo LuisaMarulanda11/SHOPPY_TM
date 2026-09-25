@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiGet, apiPost, assetUrl, formatMoney } from "../api/client";
-import CopyProductLink from "../components/CopyProductLink";
+import ShareProduct from "../components/ShareProduct";
 import { Alert, AppHeader, PageShell } from "../components/ui";
 
 export default function Producto() {
@@ -226,7 +226,7 @@ export default function Producto() {
                       </button>
                     </>
                   )}
-                  <CopyProductLink productId={producto.id} />
+                  <ShareProduct productId={producto.id} titulo={producto.titulo} />
                 </div>
 
                 {data.fecha_publicacion && (

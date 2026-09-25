@@ -1,23 +1,11 @@
 const express = require("express");
-const path = require("path");
-const fs = require("fs");
 const pool = require("../db");
 const { requireAuth } = require("../middleware/auth");
-const { upload, uploadsDir } = require("../middleware/upload");
+const { upload } = require("../middleware/upload");
+const { guardarFotos, eliminarFoto } = require("../utils/storage");
 const { ok, fail, publicUrl, mapProduct } = require("../utils/response");
 
 const router = express.Router();
-
-function storePath(filename) {
-  return `uploads/${filename}`;
-}
-
-function unlinkSafe(dbPath) {
-  if (!dbPath) return;
-  const name = String(dbPath).split(/[/\\]/).pop();
-  const abs = path.join(uploadsDir, name);
-  if (fs.existsSync(abs)) fs.unlinkSync(abs);
-}
 
 router.get("/", requireAuth, async (req, res) => {
   try {
@@ -89,8 +77,7 @@ router.post("/", requireAuth, upload.array("fotos", 10), async (req, res) => {
       return fail(res, "Ingresa un precio válido.");
     }
 
-    const files = req.files || [];
-    const rutas = files.map((f) => storePath(f.filename));
+    const rutas = await guardarFotos(req.files || []);
     const fotoPrincipal = rutas[0] || "";
 
     const [result] = await pool.query(
@@ -141,7 +128,7 @@ router.post("/update", requireAuth, upload.array("fotos", 10), async (req, res) 
       return fail(res, "Completa todos los campos.");
     }
 
-    const nuevas = (req.files || []).map((f) => storePath(f.filename));
+    const nuevas = await guardarFotos(req.files || []);
     let fotoPrincipal = rows[0].foto;
     if (!fotoPrincipal && nuevas.length) fotoPrincipal = nuevas[0];
 
@@ -188,8 +175,8 @@ router.post("/delete", requireAuth, async (req, res) => {
     await pool.query("DELETE FROM fotos_publicacion WHERE publicacion_id = ?", [id]);
     await pool.query("DELETE FROM publicaciones WHERE id = ? AND usuario_id = ?", [id, usuarioId]);
 
-    fotos.forEach((f) => unlinkSafe(f.foto));
-    unlinkSafe(rows[0].foto);
+    const rutasFotos = new Set([...fotos.map((f) => f.foto), rows[0].foto].filter(Boolean));
+    for (const ruta of rutasFotos) await eliminarFoto(ruta);
 
     return ok(res, { mensaje: "Publicación eliminada." });
   } catch (e) {
@@ -245,7 +232,7 @@ router.post("/eliminar-foto", requireAuth, async (req, res) => {
       "DELETE FROM fotos_publicacion WHERE id = ? AND publicacion_id = ?",
       [fotoId, publicacion_id]
     );
-    unlinkSafe(foto);
+    await eliminarFoto(foto);
 
     const [next] = await pool.query(
       "SELECT foto FROM fotos_publicacion WHERE publicacion_id = ? ORDER BY id ASC LIMIT 1",

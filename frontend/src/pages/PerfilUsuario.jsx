@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { apiGet, assetUrl, formatMoney } from "../api/client";
-import CopyProductLink from "../components/CopyProductLink";
+import ShareProduct from "../components/ShareProduct";
 import { Alert, AppHeader, PageShell } from "../components/ui";
 
 export default function PerfilUsuario() {
@@ -133,10 +133,10 @@ export default function PerfilUsuario() {
                           </div>
                         </Link>
                         <div className="px-4 pb-4">
-                          <CopyProductLink
+                          <ShareProduct
                             productId={p.id}
+                            titulo={p.titulo}
                             stopPropagation
-                            label="Copiar enlace"
                             className="w-full rounded-lg border border-shoppy-border bg-[#0a1220] px-3 py-2 text-sm font-medium transition hover:border-shoppy-cyan-soft/50"
                           />
                         </div>

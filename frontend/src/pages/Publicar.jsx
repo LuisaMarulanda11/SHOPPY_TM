@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiForm, apiGet } from "../api/client";
+import { LIMITE_ENVIO, comprimirImagenes, tamanoTotal } from "../utils/comprimirImagen";
 import {
   Alert,
   AppHeader,
@@ -49,14 +50,15 @@ export default function Publicar() {
     setSaving(true);
     const form = e.target;
     const fd = new FormData(form);
-    const files = form.fotos?.files;
     fd.delete("fotos");
-    if (files) {
+    try {
+      const files = await comprimirImagenes(form.fotos?.files);
+      if (tamanoTotal(files) > LIMITE_ENVIO) {
+        throw new Error("Las fotos son demasiado pesadas. Selecciona menos fotografías.");
+      }
       for (const file of files) {
         fd.append("fotos", file);
       }
-    }
-    try {
       const data = await apiForm("/publicaciones", fd);
       setMensaje(data.mensaje || "¡Producto publicado!");
       setTimeout(() => {

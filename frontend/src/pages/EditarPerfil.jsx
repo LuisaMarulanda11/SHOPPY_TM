@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { apiForm, apiGet, assetUrl } from "../api/client";
+import { comprimirImagen } from "../utils/comprimirImagen";
 import { useAuth } from "../context/AuthContext";
 import {
   Alert,
@@ -44,6 +45,11 @@ export default function EditarPerfil() {
     setSaving(true);
     const fd = new FormData(e.target);
     try {
+      const archivo = fd.get("foto");
+      if (archivo instanceof File && archivo.size > 0) {
+        const comprimida = await comprimirImagen(archivo);
+        fd.set("foto", comprimida, comprimida.name);
+      }
       const data = await apiForm("/perfil", fd);
       setMensaje(data.mensaje || "Perfil actualizado.");
       if (data.usuario) {

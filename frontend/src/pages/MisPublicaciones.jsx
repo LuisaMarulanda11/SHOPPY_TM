@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { apiGet, apiPost, assetUrl, formatMoney } from "../api/client";
-import CopyProductLink from "../components/CopyProductLink";
+import ShareProduct from "../components/ShareProduct";
 import { Alert, AppHeader, PageShell } from "../components/ui";
 
 export default function MisPublicaciones() {
@@ -127,9 +127,9 @@ export default function MisPublicaciones() {
                     >
                       Ver
                     </Link>
-                    <CopyProductLink
+                    <ShareProduct
                       productId={p.id}
-                      label="Copiar enlace"
+                      titulo={p.titulo}
                       className="rounded-lg border border-shoppy-border px-3 py-2 text-sm font-medium transition hover:border-shoppy-cyan-soft/50"
                     />
                     <Link

@@ -1,9 +1,5 @@
 import { useState } from "react";
-
-export function productShareUrl(id) {
-  const origin = window.location.origin;
-  return `${origin}/producto/${id}`;
-}
+import { copyToClipboard, productShareUrl } from "../utils/compartir";
 
 export default function CopyProductLink({
   productId,
@@ -21,20 +17,10 @@ export default function CopyProductLink({
 
     const url = productShareUrl(productId);
 
-    try {
-      if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(url);
-      } else {
-        const input = document.createElement("input");
-        input.value = url;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand("copy");
-        document.body.removeChild(input);
-      }
+    if (await copyToClipboard(url)) {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
-    } catch {
+    } else {
       window.prompt("Copia este enlace:", url);
     }
   }

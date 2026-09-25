@@ -2,6 +2,7 @@ const express = require("express");
 const pool = require("../db");
 const { requireAuth } = require("../middleware/auth");
 const { upload } = require("../middleware/upload");
+const { guardarFoto } = require("../utils/storage");
 const { ok, fail, publicUrl, mapProduct } = require("../utils/response");
 
 const router = express.Router();
@@ -51,7 +52,7 @@ router.post("/", requireAuth, upload.single("foto"), async (req, res) => {
 
     let foto = rows[0].foto;
     if (req.file) {
-      foto = `uploads/${req.file.filename}`;
+      foto = await guardarFoto(req.file);
     }
 
     await pool.query(

@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { apiPost } from "../api/client";
 import { Alert, AuthCard, Field, buttonClass, inputClass } from "../components/ui";
 
 export default function Registro() {
+  const from = useLocation().state?.from;
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,7 +37,7 @@ export default function Registro() {
       footer={
         <p className="mt-6 text-center text-shoppy-muted">
           ¿Ya tienes una cuenta?{" "}
-          <Link className="text-shoppy-cyan" to="/login">
+          <Link className="text-shoppy-cyan" to="/login" state={from ? { from } : undefined}>
             Iniciar sesión
           </Link>
         </p>

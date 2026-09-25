@@ -1,12 +1,18 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { apiPost } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { Alert, AuthCard, Field, buttonClass, inputClass } from "../components/ui";
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { setUsuario } = useAuth();
+  const from = location.state?.from;
+  const destino =
+    from?.pathname && from.pathname.startsWith("/") && !from.pathname.startsWith("//")
+      ? `${from.pathname}${from.search || ""}${from.hash || ""}`
+      : "/inicio";
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -21,7 +27,7 @@ export default function Login() {
         password: fd.get("password"),
       });
       setUsuario(data.usuario);
-      navigate("/inicio");
+      navigate(destino, { replace: true });
     } catch (err) {
       setError(err.message || "Error al iniciar sesión");
     } finally {
@@ -35,7 +41,7 @@ export default function Login() {
       footer={
         <p className="mt-6 text-center text-shoppy-muted">
           ¿No tienes una cuenta?{" "}
-          <Link className="text-shoppy-cyan" to="/registro">
+          <Link className="text-shoppy-cyan" to="/registro" state={from ? { from } : undefined}>
             Crear cuenta
           </Link>
         </p>

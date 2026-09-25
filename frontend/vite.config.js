@@ -52,6 +52,15 @@ export default defineConfig({
               expiration: { maxEntries: 80, maxAgeSeconds: 60 * 60 * 24 * 7 },
             },
           },
+          {
+            urlPattern: ({ url }) => url.hostname.endsWith(".blob.vercel-storage.com"),
+            handler: "CacheFirst",
+            options: {
+              cacheName: "shoppy-fotos",
+              cacheableResponse: { statuses: [0, 200] },
+              expiration: { maxEntries: 120, maxAgeSeconds: 60 * 60 * 24 * 30 },
+            },
+          },
         ],
       },
     }),

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { apiForm, apiGet, apiPost, assetUrl } from "../api/client";
+import { LIMITE_ENVIO, comprimirImagenes, tamanoTotal } from "../utils/comprimirImagen";
 import {
   Alert,
   AppHeader,
@@ -70,14 +71,15 @@ export default function EditarPublicacion() {
     const form = e.target;
     const fd = new FormData(form);
     fd.set("id", String(id));
-    const files = form.fotos?.files;
     fd.delete("fotos");
-    if (files) {
+    try {
+      const files = await comprimirImagenes(form.fotos?.files);
+      if (tamanoTotal(files) > LIMITE_ENVIO) {
+        throw new Error("Las fotos son demasiado pesadas. Selecciona menos fotografías.");
+      }
       for (const file of files) {
         fd.append("fotos", file);
       }
-    }
-    try {
       const data = await apiForm("/publicaciones/update", fd);
       setMensaje(data.mensaje || "Publicación actualizada.");
       setTimeout(() => navigate("/mis-publicaciones"), 700);
