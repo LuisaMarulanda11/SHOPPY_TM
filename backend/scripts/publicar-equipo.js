@@ -1,6 +1,6 @@
 /**
  * Publica un producto de ejemplo por cada integrante de src/config/equipo.js.
- * - Si el integrante no tiene cuenta, la crea con PASSWORD_INICIAL.
+ * - Si el integrante no tiene cuenta, la crea con EQUIPO_PASSWORD_INICIAL (variable en backend/.env).
  * - Si su cuenta no tiene foto de perfil, le asigna la del equipo.
  * - No duplica: si ya existe una publicación con el mismo título para ese usuario, la omite.
  * Uso: npm run publicar:equipo
@@ -10,7 +10,7 @@ const mysql = require("mysql2/promise");
 const bcrypt = require("bcryptjs");
 const EQUIPO = require("../src/config/equipo");
 
-const PASSWORD_INICIAL = "ShoppyTM2026";
+const PASSWORD_INICIAL = process.env.EQUIPO_PASSWORD_INICIAL;
 
 const PRODUCTOS = {
   "Luisa": {
@@ -83,6 +83,10 @@ async function main() {
           await conn.query("UPDATE usuarios SET foto = ? WHERE id = ?", [m.foto, usuarioId]);
         }
       } else {
+        if (!PASSWORD_INICIAL) {
+          console.log(`- ${m.nombre}: no tiene cuenta y falta EQUIPO_PASSWORD_INICIAL en .env, se omite.`);
+          continue;
+        }
         const hash = await bcrypt.hash(PASSWORD_INICIAL, 10);
         const [res] = await conn.query(
           `INSERT INTO usuarios (nombre, email, password, foto, ubicacion, fecha_registro, activo)
@@ -90,7 +94,7 @@ async function main() {
           [m.nombre, email, hash, m.foto, UBICACION]
         );
         usuarioId = res.insertId;
-        console.log(`+ Cuenta creada para ${m.nombre} (${email} / ${PASSWORD_INICIAL})`);
+        console.log(`+ Cuenta creada para ${m.nombre} (${email})`);
       }
 
       const [existe] = await conn.query(

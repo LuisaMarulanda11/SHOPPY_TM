@@ -21,7 +21,7 @@ module.exports = [
     nombre: "Juan David",
     rol: "Integrante",
     foto: "/assets/equipo/juan-david.jpg",
-    email: "juandavid@shoppytm.com",
+    email: "juandavidmarinrendon98@gmail.com",
   },
   {
     nombre: "Camilo",

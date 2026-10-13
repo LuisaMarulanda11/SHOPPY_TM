@@ -10,7 +10,9 @@
     "import:dump": "node scripts/import-dump.js",
     "migrar:fotos": "node scripts/migrar-fotos-blob.js",
     "rol:admin": "node scripts/agregar-rol-admin.js",
-    "publicar:equipo": "node scripts/publicar-equipo.js"
+    "publicar:equipo": "node scripts/publicar-equipo.js",
+    "db:respaldo": "node scripts/respaldo-db.js",
+    "pruebas:humo": "node scripts/pruebas-humo.js"
   },
   "keywords": [],
   "author": "",
