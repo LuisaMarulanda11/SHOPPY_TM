@@ -153,6 +153,11 @@ async function main() {
     check("Eliminar publicación", r.json?.ok === true, r.json?.error || "");
   }
 
+  r = await api("POST", "/perfil/password", { body: { actual: "incorrecta", nueva: PASSWORD, confirmar: PASSWORD } });
+  check("Cambio de contraseña rechaza clave actual incorrecta", r.json?.ok === false, r.json?.error || "");
+  r = await api("POST", "/perfil/password", { body: { actual: PASSWORD, nueva: PASSWORD, confirmar: PASSWORD } });
+  check("Cambio de contraseña", r.json?.ok === true, r.json?.error || "");
+
   r = await api("GET", "/admin/publicaciones");
   if (yo?.rol === "admin") check("Panel admin accesible (admin)", r.status === 200);
   else check("Panel admin bloqueado (no admin)", r.status === 403, `HTTP ${r.status}`);

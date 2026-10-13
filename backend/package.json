@@ -12,7 +12,8 @@
     "rol:admin": "node scripts/agregar-rol-admin.js",
     "publicar:equipo": "node scripts/publicar-equipo.js",
     "db:respaldo": "node scripts/respaldo-db.js",
-    "pruebas:humo": "node scripts/pruebas-humo.js"
+    "pruebas:humo": "node scripts/pruebas-humo.js",
+    "password:restablecer": "node scripts/restablecer-password.js"
   },
   "keywords": [],
   "author": "",

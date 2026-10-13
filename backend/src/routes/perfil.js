@@ -1,4 +1,5 @@
 const express = require("express");
+const bcrypt = require("bcryptjs");
 const pool = require("../db");
 const { requireAuth } = require("../middleware/auth");
 const { upload } = require("../middleware/upload");
@@ -74,6 +75,32 @@ router.post("/", requireAuth, upload.single("foto"), async (req, res) => {
   } catch (e) {
     console.error(e);
     return fail(res, "No fue posible actualizar el perfil.", 500);
+  }
+});
+
+router.post("/password", requireAuth, async (req, res) => {
+  try {
+    const usuarioId = req.session.usuarioId;
+    const actual = String(req.body.actual || "");
+    const nueva = String(req.body.nueva || "");
+    const confirmar = String(req.body.confirmar || "");
+
+    if (!actual || !nueva || !confirmar) return fail(res, "Completa todos los campos.");
+    if (nueva !== confirmar) return fail(res, "Las contraseñas nuevas no coinciden.");
+    if (nueva.length < 8) return fail(res, "La contraseña debe tener mínimo 8 caracteres.");
+
+    const [rows] = await pool.query("SELECT password FROM usuarios WHERE id = ? LIMIT 1", [usuarioId]);
+    if (!rows.length) return fail(res, "Usuario no encontrado.", 401);
+    if (!(await bcrypt.compare(actual, rows[0].password))) {
+      return fail(res, "La contraseña actual no es correcta.");
+    }
+
+    const hash = await bcrypt.hash(nueva, 10);
+    await pool.query("UPDATE usuarios SET password = ? WHERE id = ?", [hash, usuarioId]);
+    return ok(res, { mensaje: "Contraseña actualizada correctamente." });
+  } catch (e) {
+    console.error(e);
+    return fail(res, "No fue posible cambiar la contraseña.", 500);
   }
 });
 

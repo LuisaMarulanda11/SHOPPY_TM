@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { apiForm, apiGet, assetUrl } from "../api/client";
+import { apiForm, apiGet, apiPost, assetUrl } from "../api/client";
 import { comprimirImagen } from "../utils/comprimirImagen";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -20,6 +20,9 @@ export default function EditarPerfil() {
   const [mensaje, setMensaje] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [pwError, setPwError] = useState("");
+  const [pwMensaje, setPwMensaje] = useState("");
+  const [pwSaving, setPwSaving] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,6 +72,24 @@ export default function EditarPerfil() {
       setError(err.message || "No fue posible actualizar el perfil");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function onCambiarPassword(e) {
+    e.preventDefault();
+    setPwError("");
+    setPwMensaje("");
+    setPwSaving(true);
+    const form = e.target;
+    const fd = new FormData(form);
+    try {
+      const data = await apiPost("/perfil/password", Object.fromEntries(fd.entries()));
+      setPwMensaje(data.mensaje || "Contraseña actualizada.");
+      form.reset();
+    } catch (err) {
+      setPwError(err.message || "No fue posible cambiar la contraseña");
+    } finally {
+      setPwSaving(false);
     }
   }
 
@@ -151,6 +172,31 @@ export default function EditarPerfil() {
             </>
           )}
         </div>
+
+        {!loading && perfil && (
+          <div className="panel-shoppy mt-6 rounded-3xl p-6 md:p-8">
+            <h2 className="text-xl font-bold">🔒 Cambiar contraseña</h2>
+            <p className="mt-1 mb-4 text-shoppy-muted">Mínimo 8 caracteres.</p>
+
+            {pwMensaje && <Alert type="success">{pwMensaje}</Alert>}
+            {pwError && <Alert>{pwError}</Alert>}
+
+            <form onSubmit={onCambiarPassword}>
+              <Field label="Contraseña actual">
+                <input className={inputClass} type="password" name="actual" required autoComplete="current-password" />
+              </Field>
+              <Field label="Nueva contraseña">
+                <input className={inputClass} type="password" name="nueva" required minLength={8} autoComplete="new-password" />
+              </Field>
+              <Field label="Confirmar nueva contraseña">
+                <input className={inputClass} type="password" name="confirmar" required minLength={8} autoComplete="new-password" />
+              </Field>
+              <button className={buttonClass} disabled={pwSaving}>
+                {pwSaving ? "Guardando..." : "Cambiar contraseña"}
+              </button>
+            </form>
+          </div>
+        )}
       </PageShell>
     </div>
   );
