@@ -79,30 +79,37 @@ router.post("/", requireAuth, upload.single("foto"), async (req, res) => {
 
 router.get("/equipo", requireAuth, async (_req, res) => {
   try {
-    const integrantes = await Promise.all(
-      EQUIPO.map(async (m) => {
-        const base = { nombre: m.nombre, rol: m.rol, foto: m.foto, usuario_id: null, publicaciones: [] };
-        const email = String(m.email || "").trim().toLowerCase();
-        if (!email) return base;
+    // Dos consultas en total: Clever Cloud limita a 5 conexiones simultáneas por usuario.
+    const emails = EQUIPO.map((m) => String(m.email || "").trim().toLowerCase()).filter(Boolean);
+    const [usuarios] = emails.length
+      ? await pool.query("SELECT id, LOWER(email) AS email FROM usuarios WHERE LOWER(email) IN (?)", [emails])
+      : [[]];
+    const idPorEmail = new Map(usuarios.map((u) => [u.email, u.id]));
 
-        const [rows] = await pool.query(
-          "SELECT id FROM usuarios WHERE LOWER(email) = ? LIMIT 1",
-          [email]
-        );
-        if (!rows.length) return base;
-
-        const [publicaciones] = await pool.query(
-          `SELECT p.id, p.titulo, p.precio, p.foto, p.condicion, c.nombre AS categoria
+    const ids = [...idPorEmail.values()];
+    const [publicaciones] = ids.length
+      ? await pool.query(
+          `SELECT p.id, p.usuario_id, p.titulo, p.precio, p.foto, p.condicion, c.nombre AS categoria
            FROM publicaciones p
            LEFT JOIN categorias c ON p.categoria_id = c.id
-           WHERE p.usuario_id = ? AND p.estado = 'activo'
+           WHERE p.usuario_id IN (?) AND p.estado = 'activo'
            ORDER BY p.fecha_publicacion DESC`,
-          [rows[0].id]
-        );
+          [ids]
+        )
+      : [[]];
 
-        return { ...base, usuario_id: rows[0].id, publicaciones: publicaciones.map(mapProduct) };
-      })
-    );
+    const integrantes = EQUIPO.map((m) => {
+      const usuarioId = idPorEmail.get(String(m.email || "").trim().toLowerCase()) || null;
+      return {
+        nombre: m.nombre,
+        rol: m.rol,
+        foto: m.foto,
+        usuario_id: usuarioId,
+        publicaciones: usuarioId
+          ? publicaciones.filter((p) => p.usuario_id === usuarioId).map(mapProduct)
+          : [],
+      };
+    });
 
     return ok(res, { integrantes });
   } catch (e) {
