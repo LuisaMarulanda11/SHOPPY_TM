@@ -80,13 +80,12 @@ router.post("/", requireAuth, upload.single("foto"), async (req, res) => {
 router.get("/equipo", requireAuth, async (_req, res) => {
   try {
     // Dos consultas en total: Clever Cloud limita a 5 conexiones simultáneas por usuario.
-    const emails = EQUIPO.map((m) => String(m.email || "").trim().toLowerCase()).filter(Boolean);
-    const [usuarios] = emails.length
-      ? await pool.query("SELECT id, LOWER(email) AS email FROM usuarios WHERE LOWER(email) IN (?)", [emails])
+    const configurados = EQUIPO.map((m) => Number(m.usuario_id)).filter((id) => id > 0);
+    const [usuarios] = configurados.length
+      ? await pool.query("SELECT id FROM usuarios WHERE id IN (?) AND activo = 1", [configurados])
       : [[]];
-    const idPorEmail = new Map(usuarios.map((u) => [u.email, u.id]));
+    const ids = usuarios.map((u) => u.id);
 
-    const ids = [...idPorEmail.values()];
     const [publicaciones] = ids.length
       ? await pool.query(
           `SELECT p.id, p.usuario_id, p.titulo, p.precio, p.foto, p.condicion, c.nombre AS categoria
@@ -99,7 +98,7 @@ router.get("/equipo", requireAuth, async (_req, res) => {
       : [[]];
 
     const integrantes = EQUIPO.map((m) => {
-      const usuarioId = idPorEmail.get(String(m.email || "").trim().toLowerCase()) || null;
+      const usuarioId = ids.includes(Number(m.usuario_id)) ? Number(m.usuario_id) : null;
       return {
         nombre: m.nombre,
         rol: m.rol,

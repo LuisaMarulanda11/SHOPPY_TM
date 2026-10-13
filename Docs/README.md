@@ -20,8 +20,9 @@ Docs/
 │   ├── requisitos-funcionales.md          RF-01 a RF-37
 │   └── requisitos-no-funcionales.md       RNF-01 a RNF-23
 ├── 04-modelo-entidad-relacion/            Diagrama E-R, entidades y relaciones
-└── 05-base-de-datos/
-    └── shoppy_tm.sql                      Script SQL (MySQL) de la base de datos
+├── 05-base-de-datos/
+│   └── shoppy_tm.sql                      Script SQL (MySQL) de la base de datos
+└── 06-mantenimiento/                      Informes de mantenimiento mensual
 ```
 
 | # | Sección | Documento |
@@ -33,6 +34,7 @@ Docs/
 | 03 | Requisitos no funcionales | [requisitos-no-funcionales.md](03-requisitos/requisitos-no-funcionales.md) |
 | 04 | Modelo entidad-relación | [modelo-entidad-relacion.md](04-modelo-entidad-relacion/modelo-entidad-relacion.md) |
 | 05 | Script de base de datos | [shoppy_tm.sql](05-base-de-datos/shoppy_tm.sql) |
+| 06 | Mantenimiento mensual (octubre 2026) | [informe-mantenimiento-2026-10.md](06-mantenimiento/informe-mantenimiento-2026-10.md) |
 
 ## Roles del sistema
 

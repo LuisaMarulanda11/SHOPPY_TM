@@ -1,16 +1,13 @@
 /**
  * Publica un producto de ejemplo por cada integrante de src/config/equipo.js.
- * - Si el integrante no tiene cuenta, la crea con EQUIPO_PASSWORD_INICIAL (variable en backend/.env).
+ * - Usa la cuenta indicada en usuario_id (el integrante debe estar registrado).
  * - Si su cuenta no tiene foto de perfil, le asigna la del equipo.
  * - No duplica: si ya existe una publicación con el mismo título para ese usuario, la omite.
  * Uso: npm run publicar:equipo
  */
 require("dotenv").config();
 const mysql = require("mysql2/promise");
-const bcrypt = require("bcryptjs");
 const EQUIPO = require("../src/config/equipo");
-
-const PASSWORD_INICIAL = process.env.EQUIPO_PASSWORD_INICIAL;
 
 const PRODUCTOS = {
   "Luisa": {
@@ -66,35 +63,21 @@ async function main() {
   try {
     for (const m of EQUIPO) {
       const producto = PRODUCTOS[m.nombre];
-      const email = String(m.email || "").trim().toLowerCase();
-      if (!producto || !email) {
-        console.log(`- ${m.nombre}: sin correo o sin producto configurado, se omite.`);
+      if (!producto || !m.usuario_id) {
+        console.log(`- ${m.nombre}: sin usuario_id o sin producto configurado, se omite.`);
         continue;
       }
 
-      let [rows] = await conn.query(
-        "SELECT id, foto FROM usuarios WHERE LOWER(email) = ? LIMIT 1",
-        [email]
-      );
-      let usuarioId;
-      if (rows.length) {
-        usuarioId = rows[0].id;
-        if (!rows[0].foto) {
-          await conn.query("UPDATE usuarios SET foto = ? WHERE id = ?", [m.foto, usuarioId]);
-        }
-      } else {
-        if (!PASSWORD_INICIAL) {
-          console.log(`- ${m.nombre}: no tiene cuenta y falta EQUIPO_PASSWORD_INICIAL en .env, se omite.`);
-          continue;
-        }
-        const hash = await bcrypt.hash(PASSWORD_INICIAL, 10);
-        const [res] = await conn.query(
-          `INSERT INTO usuarios (nombre, email, password, foto, ubicacion, fecha_registro, activo)
-           VALUES (?, ?, ?, ?, ?, NOW(), 1)`,
-          [m.nombre, email, hash, m.foto, UBICACION]
-        );
-        usuarioId = res.insertId;
-        console.log(`+ Cuenta creada para ${m.nombre} (${email})`);
+      const [rows] = await conn.query("SELECT id, foto FROM usuarios WHERE id = ? LIMIT 1", [
+        m.usuario_id,
+      ]);
+      if (!rows.length) {
+        console.log(`- ${m.nombre}: no existe el usuario ${m.usuario_id}, se omite.`);
+        continue;
+      }
+      const usuarioId = rows[0].id;
+      if (!rows[0].foto) {
+        await conn.query("UPDATE usuarios SET foto = ? WHERE id = ?", [m.foto, usuarioId]);
       }
 
       const [existe] = await conn.query(
