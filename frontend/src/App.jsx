@@ -14,6 +14,7 @@ import EditarPublicacion from "./pages/EditarPublicacion";
 import Mensajes from "./pages/Mensajes";
 import PerfilUsuario from "./pages/PerfilUsuario";
 import Admin from "./pages/Admin";
+import Equipo from "./pages/Equipo";
 
 function HomeRedirect() {
   const { usuario, loading } = useAuth();
@@ -111,6 +112,15 @@ export default function App() {
         element={
           <ProtectedRoute>
             <PerfilUsuario />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/equipo"
+        element={
+          <ProtectedRoute>
+            <Equipo />
           </ProtectedRoute>
         }
       />

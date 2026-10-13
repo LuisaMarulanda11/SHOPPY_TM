@@ -11,6 +11,7 @@ function publicUrl(path) {
   if (!path) return "";
   const s = String(path).replace(/\\/g, "/");
   if (/^https?:\/\//i.test(s)) return s;
+  if (s.startsWith("/assets/")) return s;
   const name = s.split("/").pop();
   return name ? `/uploads/${name}` : "";
 }

@@ -4,6 +4,7 @@ const { requireAuth } = require("../middleware/auth");
 const { upload } = require("../middleware/upload");
 const { guardarFoto } = require("../utils/storage");
 const { ok, fail, publicUrl, mapProduct } = require("../utils/response");
+const EQUIPO = require("../config/equipo");
 
 const router = express.Router();
 
@@ -73,6 +74,40 @@ router.post("/", requireAuth, upload.single("foto"), async (req, res) => {
   } catch (e) {
     console.error(e);
     return fail(res, "No fue posible actualizar el perfil.", 500);
+  }
+});
+
+router.get("/equipo", requireAuth, async (_req, res) => {
+  try {
+    const integrantes = await Promise.all(
+      EQUIPO.map(async (m) => {
+        const base = { nombre: m.nombre, rol: m.rol, foto: m.foto, usuario_id: null, publicaciones: [] };
+        const email = String(m.email || "").trim().toLowerCase();
+        if (!email) return base;
+
+        const [rows] = await pool.query(
+          "SELECT id FROM usuarios WHERE LOWER(email) = ? LIMIT 1",
+          [email]
+        );
+        if (!rows.length) return base;
+
+        const [publicaciones] = await pool.query(
+          `SELECT p.id, p.titulo, p.precio, p.foto, p.condicion, c.nombre AS categoria
+           FROM publicaciones p
+           LEFT JOIN categorias c ON p.categoria_id = c.id
+           WHERE p.usuario_id = ? AND p.estado = 'activo'
+           ORDER BY p.fecha_publicacion DESC`,
+          [rows[0].id]
+        );
+
+        return { ...base, usuario_id: rows[0].id, publicaciones: publicaciones.map(mapProduct) };
+      })
+    );
+
+    return ok(res, { integrantes });
+  } catch (e) {
+    console.error(e);
+    return fail(res, "Error al cargar el equipo", 500);
   }
 });
 

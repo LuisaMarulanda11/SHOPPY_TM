@@ -9,7 +9,8 @@
     "migrate:clever": "node scripts/migrate-clever.js",
     "import:dump": "node scripts/import-dump.js",
     "migrar:fotos": "node scripts/migrar-fotos-blob.js",
-    "rol:admin": "node scripts/agregar-rol-admin.js"
+    "rol:admin": "node scripts/agregar-rol-admin.js",
+    "publicar:equipo": "node scripts/publicar-equipo.js"
   },
   "keywords": [],
   "author": "",

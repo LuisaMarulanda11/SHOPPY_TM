@@ -60,6 +60,12 @@ export function AppHeader({
               >
                 👤 Perfil
               </NavLink>
+              <NavLink
+                className={({ isActive }) => `nav-chip${isActive ? " is-active" : ""}`}
+                to="/equipo"
+              >
+                👥 Equipo
+              </NavLink>
               {esAdmin && (
                 <NavLink
                   className={({ isActive }) =>
