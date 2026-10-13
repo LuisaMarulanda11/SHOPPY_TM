@@ -48,7 +48,7 @@ Mantener la aplicación disponible, segura y funcional mediante revisiones preve
 
 ### 2.4 Funcionalidades
 
-Se creó el script `npm run pruebas:humo`, reutilizable cada mes. Crea, edita y elimina una publicación de prueba sin dejar datos. Resultado final contra producción: **20/21 pruebas OK**.
+Se creó el script `npm run pruebas:humo`, reutilizable cada mes. Crea, edita y elimina una publicación de prueba sin dejar datos. Resultado final contra producción: **23/23 pruebas OK** (se agregaron las pruebas de cambio de contraseña).
 
 | Prueba | Resultado |
 |---|---|
@@ -61,7 +61,8 @@ Se creó el script `npm run pruebas:humo`, reutilizable cada mes. Crea, edita y 
 | Favoritos agregar / quitar | OK |
 | Crear, editar y eliminar publicación con foto | OK |
 | Panel de administración bloqueado para usuarios normales (403) | OK |
-| Foto subida guardada de forma persistente (Vercel Blob) | **FALLA** (ver incidencia 2) |
+| Foto subida guardada de forma persistente (Vercel Blob) | OK (tras corregir la incidencia 2) |
+| Cambio de contraseña (rechaza clave actual incorrecta / cambia) | OK |
 | Vista móvil (390 px): sin desbordamiento horizontal ni imágenes rotas | OK (revisión manual en navegador) |
 | Recuperación de contraseña | No aplica: la aplicación no tiene esta función. |
 
@@ -85,7 +86,7 @@ Se creó el script `npm run pruebas:humo`, reutilizable cada mes. Crea, edita y 
 | Módulo afectado | Publicar / editar producto y foto de perfil |
 | Descripción e impacto | En Vercel no está configurada la variable `BLOB_READ_WRITE_TOKEN`, así que las fotos se guardan en `/tmp`, que se borra al reiniciar la instancia. 6 publicaciones tenían la foto rota (404). |
 | Acción realizada | Se restauraron las 7 publicaciones afectadas (6 rotas y 1 sin foto) con imágenes guardadas en `frontend/public/assets/productos/`, que forman parte del despliegue. |
-| Resultado / estado | **Pendiente (escalado).** Las fotos actuales quedaron bien, pero las fotos que se suban de ahora en adelante se seguirán perdiendo hasta configurar Vercel Blob (ver recomendaciones). |
+| Resultado / estado | **Solucionado.** Con acceso a Vercel se creó el Blob Store público `shoppy-tm-fotos`, conectado al proyecto del backend (Production y Preview), lo que creó `BLOB_READ_WRITE_TOKEN`, y se volvió a desplegar. Las fotos nuevas se guardan en `*.public.blob.vercel-storage.com`, y al eliminar una publicación también se borra su foto del Blob (comprobado). |
 
 ### Incidencia 3 — Rol de administrador no existía en producción
 
@@ -119,17 +120,17 @@ Se creó el script `npm run pruebas:humo`, reutilizable cada mes. Crea, edita y 
 | Información | Restauración de respaldo comprobada en entorno seguro | ✅ |
 | Funcionamiento | Inicio de sesión y registro probados | ✅ Login y cierre de sesión. El registro se probó solo en su validación, para no crear cuentas de prueba. |
 | Funcionamiento | Formularios, búsquedas y operaciones principales probados | ✅ |
-| Funcionamiento | Imágenes y archivos verificados | ⚠️ Las existentes OK; subida no persistente (incidencia 2) |
+| Funcionamiento | Imágenes y archivos verificados | ✅ Existentes y nuevas (Vercel Blob) |
 | Funcionamiento | Vista móvil y PWA revisadas | ✅ |
 | Infraestructura | Registros de errores revisados | ⚠️ Solo los locales y las respuestas de la API; los registros de Vercel requieren acceso al panel |
 | Infraestructura | Almacenamiento y recursos comprobados | ✅ Base de datos y límite de conexiones |
-| Infraestructura | Despliegue y variables de entorno verificados | ⚠️ Despliegues OK; falta `BLOB_READ_WRITE_TOKEN` |
+| Infraestructura | Despliegue y variables de entorno verificados | ✅ Despliegues OK; variables revisadas con Vercel CLI (`DB_*`, `SESSION_SECRET`, `FRONTEND_ORIGIN`, `BLOB_READ_WRITE_TOKEN`) |
 | Documentación | Incidencias y correcciones registradas | ✅ |
 | Documentación | Informe mensual elaborado | ✅ |
 
 ## 5. Estado final de la aplicación
 
-**Operativa.** Producción está disponible con HTTPS, sin vulnerabilidades conocidas en las dependencias y con la base de datos íntegra y respaldada. Las funciones principales están probadas y la app soporta peticiones concurrentes. Las 11 publicaciones activas muestran su foto. Queda una tarea pendiente que depende de acceso a Vercel (incidencia 2).
+**Operativa.** Producción está disponible con HTTPS, sin vulnerabilidades conocidas en las dependencias y con la base de datos íntegra y respaldada. Las funciones principales están probadas (23/23) y la app soporta peticiones concurrentes. Las fotos se guardan de forma persistente en Vercel Blob. Los usuarios pueden cambiar su contraseña desde *Editar perfil*.
 
 ## 6. Evidencias
 
@@ -139,13 +140,13 @@ Se creó el script `npm run pruebas:humo`, reutilizable cada mes. Crea, edita y 
 
 ## 7. Recomendaciones y actividades pendientes
 
-1. **(Alta) Activar Vercel Blob.** En Vercel, abrir el proyecto del backend y entrar a *Storage*, crear un *Blob Store* y conectarlo al proyecto (esto crea `BLOB_READ_WRITE_TOKEN`). Luego hacer *Redeploy* y ejecutar `npm run pruebas:humo`: la prueba "Foto subida es persistente" debe pasar.
+1. ~~Activar Vercel Blob~~ — **hecho** (Blob Store `shoppy-tm-fotos`).
 2. **(Media) Revisar los registros de Vercel** (*Logs*) en busca de errores 500 o accesos sospechosos.
-3. **(Media) Contraseñas de las cuentas creadas para el equipo:** los integrantes deben cambiarlas al entrar. La app no tiene opción de cambio de contraseña, así que se recomienda agregarla.
+3. **(Media) Contraseñas del equipo:** se restablecieron con `npm run password:restablecer`. Cada integrante debe cambiar la suya en *Editar perfil → Cambiar contraseña*.
 4. **(Baja) Cuenta antigua duplicada de Juan David:** decidir si se conserva, porque tiene mensajes de prueba.
 5. **(Baja) Restaurar el MySQL de XAMPP local:** no arranca porque le falta el archivo `aria_log.00000002`. No afecta a producción.
 6. Cada mes: ejecutar `npm run db:respaldo`, `npm audit` (en backend y frontend) y `npm run pruebas:humo`, y actualizar este informe.
 
 ## 8. Conclusión
 
-Se aplicó la guía de mantenimiento mensual completa. Se corrigieron 3 incidencias, entre ellas una de disponibilidad que provocaba errores 500 con varios usuarios a la vez. Queda 1 pendiente que requiere acceso al panel de Vercel. La aplicación quedó en estado operativo y con herramientas de respaldo y prueba para los próximos mantenimientos.
+Se aplicó la guía de mantenimiento mensual completa. Se corrigieron las 4 incidencias, entre ellas una de disponibilidad que provocaba errores 500 con varios usuarios a la vez y la pérdida de las fotos subidas. La aplicación quedó en estado operativo y con herramientas de respaldo y prueba para los próximos mantenimientos.
