@@ -67,6 +67,14 @@ app.use(
   })
 );
 
+if (process.env.VERCEL) {
+  const pool = require("./db");
+  app.use((_req, res, next) => {
+    res.on("finish", () => pool.liberarInactivas());
+    next();
+  });
+}
+
 // Compatibilidad: rutas usan req.session.usuarioId
 app.use((req, _res, next) => {
   if (req.session && req.session.usuarioId && !req.session.usuario_id) {
