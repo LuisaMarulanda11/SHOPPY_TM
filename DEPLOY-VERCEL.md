@@ -31,6 +31,7 @@ Configura las variables que correspondan tanto en **Production** como en **Previ
 `FRONTEND_ORIGIN` debe ser el origen HTTPS del frontend, sin rutas ni barras adicionales.
 Para Gmail, activa la verificación en dos pasos y genera una contraseña de aplicación para Vercel. Pégala en `MAIL_PASSWORD` sin espacios.
 Si los registros muestran `535 BadCredentials`, confirma que `MAIL_USER` sea esa misma cuenta y reemplaza `MAIL_PASSWORD` por una contraseña de aplicación recién generada; los cambios requieren un nuevo despliegue.
+Después de guardar variables en Vercel, inicia un nuevo despliegue del backend para que la función use los valores actualizados.
 
 3. La primera solicitud de recuperación crea la tabla `password_reset_tokens` con `CREATE TABLE IF NOT EXISTS`. Si prefieres prepararla antes del despliegue, puedes ejecutar una sola vez la migración desde la raíz del repositorio y con las variables `DB_*` configuradas localmente:
 
