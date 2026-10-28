@@ -6,9 +6,11 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
+    "test": "node --test",
     "migrate:clever": "node scripts/migrate-clever.js",
     "import:dump": "node scripts/import-dump.js",
     "migrar:fotos": "node scripts/migrar-fotos-blob.js",
+    "migrar:password-reset": "node scripts/migrar-password-reset.js",
     "rol:admin": "node scripts/agregar-rol-admin.js",
     "publicar:equipo": "node scripts/publicar-equipo.js",
     "db:respaldo": "node scripts/respaldo-db.js",
@@ -29,7 +31,8 @@
     "express": "^4.21.2",
     "morgan": "^1.10.0",
     "multer": "^2.4.0",
-    "mysql2": "^3.14.0"
+    "mysql2": "^3.14.0",
+    "nodemailer": "^10.2.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"
