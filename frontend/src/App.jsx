@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
 import { useAuth } from "./context/AuthContext";
 import Login from "./pages/Login";
+import RecuperarContrasena from "./pages/RecuperarContrasena";
 import Registro from "./pages/Registro";
 import Inicio from "./pages/Inicio";
 import Producto from "./pages/Producto";
@@ -34,6 +35,7 @@ export default function App() {
       <Route path="/" element={<HomeRedirect />} />
       <Route path="/login" element={<Login />} />
       <Route path="/registro" element={<Registro />} />
+      <Route path="/recuperar-contrasena" element={<RecuperarContrasena />} />
 
       <Route
         path="/inicio"

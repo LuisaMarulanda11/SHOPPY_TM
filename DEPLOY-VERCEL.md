@@ -1,34 +1,47 @@
 # Despliegue SHOPPY T&M en Vercel
 
-## Qué se despliega
+## Arquitectura
 
-- Frontend React (Vite) → estático en Vercel
-- Backend Express → función serverless en `/api`
-- Base de datos → Clever Cloud MySQL (ya configurada)
+- Frontend React (Vite) → proyecto Vercel con raíz en el repositorio.
+- Backend Express → proyecto Vercel separado con raíz `backend`.
+- MySQL → Clever Cloud. El frontend reenvía `/api` y `/uploads` al backend.
 
-## Pasos
+## Configuración
 
-1. Sube el repo a GitHub (sin `backend/.env`; usa variables en Vercel).
+1. Importa el repositorio como proyecto backend en Vercel y configura **Root Directory** = `backend`. Conserva su `backend/vercel.json`.
 
-2. En [vercel.com](https://vercel.com) → **Add New Project** → importa el repo.
-
-3. Configura **Root Directory** = raíz del monorepo (donde está `vercel.json`).
-
-4. En **Settings → Environment Variables** agrega:
+2. En el proyecto backend, ve a **Settings → Environment Variables** y agrega:
 
 | Variable | Valor |
 |---|---|
-| `DB_HOST` | `bemyxi5fpumrboeuw8xo-mysql.services.clever-cloud.com` |
+| `DB_HOST` | Host MySQL de Clever Cloud |
 | `DB_PORT` | `3306` |
 | `DB_USER` | (tu usuario Clever) |
 | `DB_PASSWORD` | (tu password Clever) |
-| `DB_NAME` | `bemyxi5fpumrboeuw8xo` |
+| `DB_NAME` | Nombre de la base MySQL |
 | `SESSION_SECRET` | un texto largo aleatorio |
-| `FRONTEND_ORIGIN` | `https://TU-PROYECTO.vercel.app` (ajústalo tras el primer deploy) |
+| `FRONTEND_ORIGIN` | URL HTTPS de producción del frontend |
+| `MAIL_HOST` | Host SMTP del proveedor de correo |
+| `MAIL_PORT` | Puerto SMTP (465 para TLS o 587 para STARTTLS) |
+| `MAIL_USER` | Usuario SMTP |
+| `MAIL_PASSWORD` | Contraseña o clave SMTP |
+| `MAIL_FROM` | Remitente verificado, por ejemplo `SHOPPY T&M <cuenta@tudominio.com>` |
 
-5. Deploy. La URL será tipo `https://shoppy-tm.vercel.app`.
+Configura las variables que correspondan tanto en **Production** como en **Preview**. No guardes secretos en Git ni los compartas por el chat.
 
-6. Vuelve a poner `FRONTEND_ORIGIN` con esa URL exacta y redespliega.
+3. La primera solicitud de recuperación crea la tabla `password_reset_tokens` con `CREATE TABLE IF NOT EXISTS`. Si prefieres prepararla antes del despliegue, puedes ejecutar una sola vez la migración desde la raíz del repositorio y con las variables `DB_*` configuradas localmente:
+
+   ```bash
+   npm run migrar:password-reset --prefix backend
+   ```
+
+   Como alternativa, ejecuta `backend/sql/password_reset_tokens.sql` en Clever Cloud. La cuenta de MySQL debe permitir crear esa tabla para que funcione la recuperación automática.
+
+4. Importa el mismo repositorio como proyecto frontend en Vercel y deja **Root Directory** en la raíz del repositorio. Sus reglas en `vercel.json` ya envían `/api` y `/uploads` a `https://shoppy-tm-snowy.vercel.app`.
+
+5. Si cambia el dominio de cualquiera de los proyectos, actualiza el destino del proxy del frontend y `FRONTEND_ORIGIN` en el backend; luego redespliega ambos proyectos.
+
+La opción **¿Olvidaste tu contraseña?** envía un enlace de un solo uso, válido por 30 minutos. La tabla guarda únicamente el hash del token.
 
 ## Local
 

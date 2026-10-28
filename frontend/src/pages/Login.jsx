@@ -55,6 +55,11 @@ export default function Login() {
         <Field label="Contraseña">
           <input className={inputClass} type="password" name="password" required autoComplete="current-password" placeholder="Tu contraseña" />
         </Field>
+        <div className="-mt-2 mb-4 text-right text-sm">
+          <Link className="text-shoppy-cyan hover:underline" to="/recuperar-contrasena">
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </div>
         <button className={buttonClass} disabled={loading}>
           {loading ? "Entrando..." : "Iniciar sesión"}
         </button>
