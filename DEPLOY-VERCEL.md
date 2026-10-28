@@ -23,7 +23,7 @@
 | `FRONTEND_ORIGIN` | `https://shoppy-tm-1qwb.vercel.app` |
 | `MAIL_HOST` | Host SMTP del proveedor de correo |
 | `MAIL_PORT` | Puerto SMTP (465 para TLS o 587 para STARTTLS) |
-| `MAIL_USER` | Usuario SMTP |
+| `MAIL_USER` | Correo completo de la misma cuenta Google que generó la contraseña de aplicación |
 | `MAIL_PASSWORD` | Contraseña de aplicación de Google (si usas Gmail), no la contraseña normal |
 | `MAIL_FROM` | Remitente verificado, por ejemplo `SHOPPY T&M <cuenta@tudominio.com>` |
 
