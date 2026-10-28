@@ -20,7 +20,7 @@
 | `DB_PASSWORD` | (tu password Clever) |
 | `DB_NAME` | Nombre de la base MySQL |
 | `SESSION_SECRET` | un texto largo aleatorio |
-| `FRONTEND_ORIGIN` | URL HTTPS de producción del frontend |
+| `FRONTEND_ORIGIN` | `https://shoppy-tm-1qwb.vercel.app` |
 | `MAIL_HOST` | Host SMTP del proveedor de correo |
 | `MAIL_PORT` | Puerto SMTP (465 para TLS o 587 para STARTTLS) |
 | `MAIL_USER` | Usuario SMTP |
@@ -28,6 +28,7 @@
 | `MAIL_FROM` | Remitente verificado, por ejemplo `SHOPPY T&M <cuenta@tudominio.com>` |
 
 Configura las variables que correspondan tanto en **Production** como en **Preview**. No guardes secretos en Git ni los compartas por el chat.
+`FRONTEND_ORIGIN` debe ser el origen HTTPS del frontend, sin rutas ni barras adicionales.
 
 3. La primera solicitud de recuperación crea la tabla `password_reset_tokens` con `CREATE TABLE IF NOT EXISTS`. Si prefieres prepararla antes del despliegue, puedes ejecutar una sola vez la migración desde la raíz del repositorio y con las variables `DB_*` configuradas localmente:
 
