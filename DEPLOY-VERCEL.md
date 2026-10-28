@@ -24,11 +24,12 @@
 | `MAIL_HOST` | Host SMTP del proveedor de correo |
 | `MAIL_PORT` | Puerto SMTP (465 para TLS o 587 para STARTTLS) |
 | `MAIL_USER` | Usuario SMTP |
-| `MAIL_PASSWORD` | Contraseña o clave SMTP |
+| `MAIL_PASSWORD` | Contraseña de aplicación de Google (si usas Gmail), no la contraseña normal |
 | `MAIL_FROM` | Remitente verificado, por ejemplo `SHOPPY T&M <cuenta@tudominio.com>` |
 
 Configura las variables que correspondan tanto en **Production** como en **Preview**. No guardes secretos en Git ni los compartas por el chat.
 `FRONTEND_ORIGIN` debe ser el origen HTTPS del frontend, sin rutas ni barras adicionales.
+Para Gmail, activa la verificación en dos pasos y genera una contraseña de aplicación para Vercel. Pégala en `MAIL_PASSWORD` sin espacios.
 
 3. La primera solicitud de recuperación crea la tabla `password_reset_tokens` con `CREATE TABLE IF NOT EXISTS`. Si prefieres prepararla antes del despliegue, puedes ejecutar una sola vez la migración desde la raíz del repositorio y con las variables `DB_*` configuradas localmente:
 
